@@ -1,0 +1,7 @@
+.DS_Store
+**/.DS_Store
+node_modules/
+assets/meshy_output/
+zombie-cv-session*.json
+zombie-cv-replay*.json
+*.log

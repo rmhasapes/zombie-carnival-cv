@@ -1,0 +1,61 @@
+.control-row {
+  align-items: flex-start !important;
+  border-top: 1px solid #263746;
+  margin: 0;
+  padding: 10px 0;
+}
+
+.control-row input[type="number"] {
+  flex: 0 0 95px;
+}
+
+.control-copy {
+  display: block;
+  line-height: 1.35;
+}
+
+.control-help,
+.select-help small,
+.check-help small {
+  color: #8fa2b2;
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.45;
+  margin-top: 5px;
+}
+
+.check-help {
+  align-items: flex-start;
+}
+
+.check-help input {
+  margin-top: 3px;
+}
+
+.troubleshooting {
+  background: #0e1720;
+  border: 1px solid #314657;
+  border-radius: 7px;
+  margin-top: 14px;
+  padding: 10px 12px;
+}
+
+.troubleshooting summary {
+  color: #cce6b7;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.troubleshooting p {
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+.troubleshooting b {
+  color: #e4edf1;
+}
+
+.camera-tuning{margin-top:14px;border:1px solid #40566a;border-radius:8px;padding:10px 12px}.camera-tuning summary{cursor:pointer;color:#d6e8f2;font-weight:700}.camera-tuning[open] summary{margin-bottom:10px}.camera-control-row{display:grid;grid-template-columns:minmax(150px,1fr) minmax(180px,2fr) 72px;gap:10px;align-items:center;margin:10px 0}.camera-control-row input,.camera-control-row select{width:100%;margin:0}.camera-control-row output{font:12px ui-monospace,monospace;color:#b9e8a7;text-align:right}.camera-control-note{grid-column:1/-1;margin:-5px 0 2px;color:#93a7b7;font-size:11px}@media(max-width:650px){.camera-control-row{grid-template-columns:1fr 70px}.camera-control-row>span{grid-column:1/-1}}

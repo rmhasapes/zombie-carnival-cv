@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Zombie Carnival · Carnival console</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header class="topbar"><div class="brand"><span class="brand-mark">ZC</span><div><strong>ZOMBIE CARNIVAL</strong><small>Halloween fundraiser</small></div></div><div class="header-actions"><button id="open-projector" class="quiet">Open projector</button><button id="start-round" class="primary">Start round</button></div></header>
+<main class="workspace">
+ <section class="play-column">
+  <div class="stage-top"><span id="round-status">Ready for the next player</span><span class="display-label">HDMI game preview</span></div>
+  <div class="stage-wrap"><div id="game-root"></div><div id="loading-art">Loading the desert carnival…</div></div>
+  <div class="round-strip"><div><span>SCORE</span><strong id="score">000</strong></div><div><span id="throws-label">THROWS LEFT</span><strong id="throws">3</strong></div><div><span>TIME</span><strong id="time">60<span>s</span></strong></div><button id="pause-round" class="quiet">Pause</button><button id="reset-round" class="quiet">Reset</button></div>
+  <div class="mode-row"><span id="input-label">Manual input</span><span id="input-hint">Click a zombie for a hit. Click empty space for a miss.</span><label class="sound-toggle"><input type="checkbox" id="music" checked> Music</label><label class="sound-toggle"><input type="checkbox" id="sound" checked> Effects</label></div>
+  <div class="event-bar"><span class="label">LAST THROW</span><span id="last-event">Waiting for a player</span><button id="export-log" class="text-button">Export session</button></div>
+ </section>
+ <aside class="console">
+  <nav class="tabs" aria-label="Operator panels"><button data-tab="round" class="active">Round</button><button data-tab="camera">Camera · assisted</button><button data-tab="calibrate">Calibrate · assisted</button></nav>
+  <section id="tab-round" class="tab-panel">
+   <h2>Run the game</h2><p class="muted">Hit zombies for 100 points, heads for 300, the runner for 1,000, and the five-second jump scare for 50 points per hit.</p>
+   <label>Input mode<select id="input-mode"><option value="manual">Manual / click-to-play</option><option value="assisted">Camera + attendant confirmation</option><option value="calibrated">Calibrated CV / test mode</option></select></label>
+   <label><input id="gameplay-cv-debug" type="checkbox"> Show CV diagnostics on gameplay/projector</label>
+   <p class="help">Displays the tracked path, predicted impact, calibrated-size ratio, confidence, tracker state, and latest CV hit or miss. Diagnostic only; it does not change scoring.</p>
+   <p id="mode-help" class="help">A volunteer clicks the target struck by the ball. No camera is needed to try the game.</p>
+   <label>Difficulty<select id="pace"><option value="easy">Easy · 3 targets / 3.0s</option><option value="normal" selected>Normal · 2 targets / 1.8s</option><option value="quick">Hard · 2 targets / 0.95s</option></select></label>
+   <p id="difficulty-help" class="help">Normal: two zombies maximum, 1.8 seconds to land a hit.</p>
+   <label><input type="checkbox" id="jump-scares" checked> 5-second jump-scare bonus</label>
+   <p class="help">The giant target remains hittable for five seconds. Every detected impact inside it awards 50 points. Sound follows the Sound switch.</p>
+   <label><input type="checkbox" id="limit-throws" checked> Limit balls per round</label>
+   <label>Balls per round <input id="throw-count" type="number" min="1" max="20" step="1" value="3" style="display:block;width:100%;margin-top:8px;padding:10px;background:#18252a;border:1px solid #3b4b51;color:#eef4ef;font:inherit"></label>
+   <p id="throw-count-help" class="help">1–20 balls. Applied when the next round starts.</p>
+   <label>Round window<select id="duration"><option value="60">60 seconds</option><option value="30">30 seconds</option><option value="90">90 seconds</option></select></label>
+   <div class="split-buttons"><button id="confirm-hit" disabled>Confirm tracked hit</button><button id="record-miss">Record miss</button></div>
+   <div id="cv-setup" class="note" hidden><strong>Calibrated CV setup required</strong><p id="cv-status">Open the CV setup, complete its checks and wall-radius samples, then enable test scoring.</p><p><b>Camera handoff:</b> the CV setup window owns the camera. Leave it open while playing; do not reconnect the camera in this main console.</p><button id="open-cv-setup" class="wide">Open CV setup &amp; validation</button></div>
+   <div class="note"><strong>For the fundraiser</strong><p>Use manual input until real camera throws pass your rehearsal. Camera position alone cannot prove wall contact.</p></div>
+   <details><summary>Keyboard shortcuts</summary><p>Enter: start · P: pause · R: reset · Space: confirm tracked hit · M: miss. Shortcuts ignore text fields.</p></details>
+  </section>
+  <section id="tab-camera" class="tab-panel" hidden>
+   <h2>iPhone tracking · assisted mode only</h2><p class="muted">Use this camera only for Camera + attendant confirmation. Calibrated CV / test mode uses the camera in its separate CV setup window.</p><details><summary>Wireless iPhone camera on Mac</summary><p>Continuity Camera lets the iPhone appear in Camera source without a cable. Keep Wi-Fi and Bluetooth on, use the same Apple Account on both devices, mount and lock the iPhone, then choose it from the list. If camera names are hidden initially, connect once to allow browser permission, stop, then select the named iPhone camera. The CV setup window includes the complete wireless checklist.</p></details>
+   <label>Camera source<select id="camera-source"><option value="">Request permission to see cameras</option></select></label>
+   <div class="split-buttons"><button id="connect-camera" class="primary">Connect camera</button><button id="stop-camera">Stop</button></div>
+   <div class="camera-wrap"><video id="camera-video" autoplay playsinline muted hidden></video><canvas id="camera-preview" width="480" height="270"></canvas><span id="camera-empty">Your camera preview appears here</span></div>
+   <div id="camera-status" class="help" role="status">Camera disconnected</div>
+   <label>Monitored-area zoom <output id="digital-zoom-label">1.00×</output><input id="digital-zoom" type="range" min="1" max="2.5" step=".05" value="1"></label>
+   <label>Crop position · horizontal <output id="crop-x-label">50%</output><input id="crop-x" type="range" min="0" max="100" step="1" value="50"></label>
+   <label>Crop position · vertical <output id="crop-y-label">50%</output><input id="crop-y" type="range" min="0" max="100" step="1" value="50"></label>
+   <p class="help">Zoom defines the crop size. Crop position moves that monitored area across the camera frame before preview, calibration, and detection. Changing either clears calibration.</p>
+   <div class="telemetry"><span>Processing <strong id="camera-fps">0 fps</strong></span><span>Ball <strong id="ball-state">Not found</strong></span></div>
+   <button id="sample-color" class="wide">Pick ball color from the preview</button>
+   <label>Color tolerance <output id="tolerance-label">24</output><input id="tolerance" type="range" min="8" max="65" value="24"></label>
+   <label>Minimum ball size <output id="size-label">5 px</output><input id="min-size" type="range" min="3" max="25" value="5"></label>
+   <details open><summary>Connect an iPhone</summary><p><b>Mac:</b> enable Continuity Camera, use the same Apple Account, trust the Mac, mount the phone in landscape and keep it locked. Select its camera above.</p><p><b>Windows:</b> use Camo Camera + Camo Studio over USB and select the Camo camera. Disable blur, reframing and reactions. Browser camera support varies.</p></details>
+   <p class="privacy">The video is processed locally in this browser. No footage is uploaded or recorded.</p>
+  </section>
+  <section id="tab-calibrate" class="tab-panel" hidden>
+   <h2>Align the wall · assisted mode only</h2><p class="muted">For Calibrated CV / test mode, perform all calibration in the CV setup window instead.</p><ol class="steps"><li>Move the projector window to the HDMI display.</li><li>Fit the projected image first.</li><li>Match four numbered marks in the cropped calibration feed below.</li></ol>
+   <div class="camera-wrap"><canvas id="calibration-preview" width="480" height="270" aria-label="Cropped camera calibration feed"></canvas><span id="calibration-empty">Connect a camera to see the cropped monitored area</span></div>
+   <p class="help">This is the exact cropped image sent to the detector and game mapping. Click the numbered projected marks here.</p>
+   <button id="fit-projection" class="wide">Open projection fit</button>
+   <button id="start-calibration" class="primary wide">Calibrate camera to game</button>
+   <div id="calibration-status" class="help">No camera calibration saved</div>
+   <button id="clear-calibration" class="text-button">Clear calibration</button>
+   <label><input id="show-hitboxes" type="checkbox"> Show target hitboxes</label>
+   <label><input id="show-tracking" type="checkbox" checked> Show tracking marker in operator preview</label>
+   <div class="note"><strong>Test before play</strong><p>Check center and edge points after calibration. Recalibrate when the camera, projection fit, resolution or wall moves. A single camera's automatic contact estimate is experimental.</p></div>
+   <button id="synthetic-test" class="wide">Run synthetic camera test</button>
+   <p class="help">Uses a generated orange-ball video pattern to test the software pipeline. It does not validate real-world accuracy.</p>
+  </section>
+ </aside>
+</main>
+<footer><span id="session-count">0 rounds completed</span><span>Build 0.6.0 · one camera · one HDMI projector</span><button id="open-cv-lab" class="text-button">CV setup &amp; validation</button><a href="README.md" target="_blank">Setup guide</a></footer>
+<div id="toast" class="toast" role="status" hidden></div>
+<script src="vendor/phaser.min.js"></script><script src="vendor/tracking.min.js"></script><script type="module" src="boot.js?build=0.6.0"></script>
+</body></html>
