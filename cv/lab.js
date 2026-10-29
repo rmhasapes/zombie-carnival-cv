@@ -8,7 +8,23 @@ const calibrationBackdrop=document.createElement('canvas'),backdropContext=calib
 const SAVE_KEY='zombie-cv-calibration-v3',CAMERA_KEY='zombie-cv-camera-v1';let savedCalibration=null;try{savedCalibration=JSON.parse(localStorage.getItem(SAVE_KEY));}catch{}
 const savedView=savedCalibration?.calibration?.signature;if(Number.isFinite(savedView?.zoom))zoom=Math.max(1,Math.min(2.5,savedView.zoom));if(Number.isFinite(savedView?.cropX))cropX=Math.max(0,Math.min(1,savedView.cropX));if(Number.isFinite(savedView?.cropY))cropY=Math.max(0,Math.min(1,savedView.cropY));$('zoom').value=String(zoom);$('crop-x').value=String(Math.round(cropX*100));$('crop-y').value=String(Math.round(cropY*100));$('crop-x-label').textContent=Math.round(cropX*100)+'%';$('crop-y-label').textContent=Math.round(cropY*100)+'%';
 window.gameCanvas=projection;
-function returnToGame(){const opener=window.opener;if(opener&&!opener.closed){try{opener.postMessage({type:'zombie-cv-return'},location.origin);opener.focus();status('Game console focused. Keep this CV window open for camera tracking.');return;}catch{}}const game=window.open('index.html','zombie-carnival-game');if(game){game.focus();status('Opened the game console. Keep this CV window open for camera tracking.');}else{status('Allow pop-ups, then use the game console tab.');}}
+function returnToGame(){
+ const opener=window.opener;
+ if(opener&&!opener.closed){
+  try{
+   reportOpener();
+   if(typeof opener.returnFromCvLab==='function')opener.returnFromCvLab();
+   else opener.postMessage({type:'zombie-cv-return'},location.origin);
+   // An empty URL targets the existing console without navigating or resetting it.
+   const target=opener.name?window.open('',opener.name):opener;
+   (target||opener).focus();
+   status('Game console selected. Keep this CV window open for camera tracking.');
+   setTimeout(()=>{if(document.hasFocus())status('The browser kept CV setup in front. Select the Zombie Carnival game tab/window manually. Keep CV setup open; your calibration is unchanged.');},350);
+   return;
+  }catch{status('Select the Zombie Carnival game tab/window manually. Keep this CV window open to preserve camera tracking.');return;}
+ }
+ status('No connected game console. Open the game console, then open CV setup from there to connect scoring. This calibration remains saved.');
+}
  $('return-game').onclick=returnToGame;
 function fallbackBackdrop(){const g=backdropContext.createLinearGradient(0,0,0,720);g.addColorStop(0,'#37233f');g.addColorStop(.38,'#ad5536');g.addColorStop(.62,'#8a4b32');g.addColorStop(1,'#4a322c');backdropContext.fillStyle=g;backdropContext.fillRect(0,0,1280,720);backdropContext.fillStyle='#d7864b';backdropContext.beginPath();backdropContext.moveTo(0,425);for(let x=0;x<=1280;x+=80)backdropContext.lineTo(x,420+Math.sin(x*.014)*22);backdropContext.lineTo(1280,720);backdropContext.lineTo(0,720);backdropContext.fill();backdropContext.fillStyle='rgba(255,196,102,.72)';for(let x=42;x<1280;x+=88)backdropContext.fillRect(x,345+(x%4)*7,7,7);backdropReady=true;$('lighting-state').textContent='Game canvas unavailable · using desert lighting fallback';}
 function captureCalibrationBackdrop(force=false){if(backdropReady&&!force)return true;let source,game,overlay,overlayWasVisible=false;try{source=window.opener?.gameCanvas;game=window.opener?.carnival;overlay=game?.scene?.overlay;}catch{}if(source?.width&&source?.height){backdropReady=true;overlayWasVisible=!!overlay?.visible;overlay?.setVisible(false);$('lighting-state').textContent='Capturing active-game lighting…';requestAnimationFrame(()=>requestAnimationFrame(()=>{backdropContext.drawImage(source,0,0,1280,720);if(overlayWasVisible)overlay?.setVisible(true);$('lighting-state').textContent='Frozen from active Zombie Carnival gameplay';}));return true;}fallbackBackdrop();return false;}
